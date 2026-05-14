@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factures By Habitat – 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bordeaux:#7B1D1D; --bordeaux-light:#A02020; --or:#C8860A; --or-light:#E5A020;
+  --creme:#FAF6F0; --text:#1A1208; --text-light:#5A4A30; --white:#fff; --green:#1A7A3A;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:#F0ECE4; color:var(--text); }
+
+.page-header {
+  background:linear-gradient(135deg,var(--bordeaux),#3D0B0B);
+  padding:24px 40px; display:flex; justify-content:space-between; align-items:center;
+}
+.page-header h1 { font-family:'Playfair Display',serif; color:var(--creme); font-size:1.4rem; }
+.page-header p { color:rgba(250,246,240,0.65); font-size:0.82rem; margin-top:4px; }
+
+.tab-bar {
+  display:flex; background:var(--bordeaux); padding:0 40px;
+}
+.tab {
+  padding:13px 22px; color:rgba(250,246,240,0.6); font-size:0.85rem; font-weight:500;
+  cursor:pointer; border-bottom:3px solid transparent; transition:all 0.2s;
+}
+.tab.active { color:var(--or-light); border-bottom-color:var(--or-light); }
+.tab:hover { color:var(--creme); }
+
+.container { max-width:820px; margin:40px auto; padding:0 20px 60px; }
+
+.invoice { display:none; }
+.invoice.active { display:block; }
+
+/* FACTURE */
+.invoice-doc {
+  background:var(--white); border-radius:4px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.12); overflow:hidden;
+}
+
+.inv-header {
+  background:linear-gradient(135deg,var(--bordeaux),#4A0F0F);
+  padding:36px 48px; display:flex; justify-content:space-between; align-items:flex-start;
+}
+.inv-logo { display:flex; align-items:center; gap:14px; }
+.inv-logo-hex {
+  width:48px; height:48px;
+  background:rgba(200,134,10,0.25); border:2px solid var(--or);
+  clip-path:polygon(50% 0%,95% 25%,95% 75%,50% 100%,5% 75%,5% 25%);
+  display:flex; align-items:center; justify-content:center; font-size:1.2rem;
+}
+.inv-brand h2 { font-family:'Playfair Display',serif; color:var(--creme); font-size:1.5rem; }
+.inv-brand p { color:rgba(250,246,240,0.6); font-size:0.78rem; margin-top:2px; }
+
+.inv-meta { text-align:right; }
+.inv-num { font-family:'Playfair Display',serif; color:var(--or-light); font-size:1.1rem; font-weight:700; }
+.inv-date { color:rgba(250,246,240,0.65); font-size:0.8rem; margin-top:4px; }
+.inv-status {
+  display:inline-block; margin-top:8px;
+  padding:4px 12px; border-radius:20px; font-size:0.72rem; font-weight:700;
+  letter-spacing:0.06em; text-transform:uppercase;
+}
+.status-paid { background:rgba(26,122,58,0.25); border:1px solid rgba(26,122,58,0.5); color:#7FE5A0; }
+.status-pending { background:rgba(200,134,10,0.2); border:1px solid rgba(200,134,10,0.4); color:var(--or-light); }
+
+.inv-parties { display:grid; grid-template-columns:1fr 1fr; gap:40px; padding:36px 48px; background:#FAFAF8; border-bottom:1px solid #EEE8E0; }
+.party-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--or); font-weight:600; margin-bottom:10px; }
+.party-name { font-weight:700; font-size:1rem; color:var(--text); margin-bottom:4px; }
+.party-info { font-size:0.83rem; color:var(--text-light); line-height:1.7; }
+
+.inv-body { padding:36px 48px; }
+
+/* Table des postes */
+.postes-table { width:100%; border-collapse:collapse; margin-bottom:28px; }
+.postes-table th {
+  background:var(--bordeaux); color:var(--creme); padding:10px 14px;
+  font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;
+  text-align:left;
+}
+.postes-table th:last-child, .postes-table td:last-child { text-align:right; }
+.postes-table td {
+  padding:11px 14px; font-size:0.87rem; border-bottom:1px solid #F0EBE0;
+  color:var(--text);
+}
+.postes-table tr:nth-child(even) td { background:#FDFAF6; }
+.postes-table tr:last-child td { border-bottom:none; }
+.td-desc { font-weight:500; }
+.td-num { color:var(--text-light); }
+
+/* Totaux */
+.totals-section { display:flex; justify-content:flex-end; margin-bottom:32px; }
+.totals-box { min-width:280px; }
+.total-line {
+  display:flex; justify-content:space-between; padding:8px 0;
+  font-size:0.87rem; border-bottom:1px solid #EEE8E0;
+}
+.total-line:last-child { border-bottom:none; }
+.total-line .t-label { color:var(--text-light); }
+.total-line .t-val { font-weight:600; color:var(--text); }
+.total-ttc {
+  display:flex; justify-content:space-between; align-items:center;
+  background:var(--bordeaux); padding:14px 18px; border-radius:8px; margin-top:10px;
+}
+.total-ttc .t-label { color:rgba(250,246,240,0.8); font-size:0.82rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+.total-ttc .t-val { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--creme); font-weight:700; }
+
+/* Pied de facture */
+.inv-footer { padding:24px 48px 36px; border-top:2px solid var(--creme); }
+.inv-footer-grid { display:grid; grid-template-columns:1fr 1fr; gap:32px; }
+.footer-block h4 { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--or); font-weight:600; margin-bottom:8px; }
+.footer-block p { font-size:0.78rem; color:var(--text-light); line-height:1.6; }
+.inv-legal {
+  margin-top:24px; padding-top:16px; border-top:1px solid #EEE8E0;
+  font-size:0.72rem; color:#999; line-height:1.5; text-align:center;
+}
+
+/* Print */
+@media print {
+  .page-header, .tab-bar { display:none; }
+  .invoice { display:block !important; margin-bottom:0; }
+  body { background:white; }
+  .invoice-doc { box-shadow:none; }
+  .container { margin:0; max-width:100%; }
+}
+
+.print-btn {
+  width:100%; padding:14px;
+  background:var(--bordeaux); color:var(--white);
+  border:none; border-radius:8px; font-family:'DM Sans',sans-serif;
+  font-size:0.9rem; font-weight:600; cursor:pointer; margin-top:20px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.print-btn:hover { background:var(--bordeaux-light); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <h1>By Habitat – Factures 2026</h1>
+    <p>Société de courtage dans le bâtiment · Saillenard, Saône-et-Loire (71)</p>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="showInv(0)">Facture N°001 – Rénovation énergétique</div>
+  <div class="tab" onclick="showInv(1)">Facture N°002 – Plomberie</div>
+  <div class="tab" onclick="showInv(2)">Facture N°003 – Peinture & menuiserie</div>
+</div>
+
+<div class="container">
+
+<!-- ======================== FACTURE 1 ======================== -->
+<div class="invoice active" id="inv0">
+<div class="invoice-doc">
+  <div class="inv-header">
+    <div class="inv-logo">
+      <div class="inv-logo-hex">⌂</div>
+      <div class="inv-brand"><h2>By Habitat</h2><p>Courtage dans le Bâtiment</p></div>
+    </div>
+    <div class="inv-meta">
+      <div class="inv-num">FACTURE N° FAC-2026-001</div>
+      <div class="inv-date">Émise le 14 avril 2026</div>
+      <div class="inv-date">Échéance : 14 mai 2026</div>
+      <div class="inv-status status-paid">✓ Payée</div>
+    </div>
+  </div>
+
+  <div class="inv-parties">
+    <div>
+      <div class="party-label">Émetteur</div>
+      <div class="party-name">By Habitat</div>
+      <div class="party-info">
+        Siège social : Saillenard (71310)<br>
+        Bourgogne-Franche-Comté<br>
+        Dirigeant : M. BOUKHRIS Youness<br>
+        Email : contact@byhabitat.fr<br>
+        SIRET : 912 345 678 00014<br>
+        N° TVA intracomm. : FR 12 912345678
+      </div>
+    </div>
+    <div>
+      <div class="party-label">Client</div>
+      <div class="party-name">M. et Mme LAMBERT Robert</div>
+      <div class="party-info">
+        18 chemin des Vignes<br>
+        71640 Givry<br>
+        Tél. : 06 23 45 67 89<br>
+        Email : rlambert@email.fr
+      </div>
+    </div>
+  </div>
+
+  <div class="inv-body">
+    <table class="postes-table">
+      <thead>
+        <tr>
+          <th style="width:44%">Description</th>
+          <th>Qté</th>
+          <th>Unité</th>
+          <th>P.U. HT</th>
+          <th>Total HT</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="td-desc">Isolation combles perdus – laine soufflée R≥7</td>
+          <td class="td-num">95</td>
+          <td class="td-num">m²</td>
+          <td class="td-num">28,00 €</td>
+          <td class="td-num">2 660,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc">Isolation murs intérieurs – laine de roche 100mm</td>
+          <td class="td-num">48</td>
+          <td class="td-num">m²</td>
+          <td class="td-num">55,00 €</td>
+          <td class="td-num">2 640,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc">Fournitures et matériaux d'isolation</td>
+          <td class="td-num">1</td>
+          <td class="td-num">forfait</td>
+          <td class="td-num">620,00 €</td>
+          <td class="td-num">620,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc">Main-d'œuvre mise en œuvre – artisan RGE</td>
+          <td class="td-num">24</td>
+          <td class="td-num">h</td>
+          <td class="td-num">58,00 €</td>
+          <td class="td-num">1 392,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc" style="color:var(--or)">Commission By Habitat – coordination et suivi</td>
+          <td class="td-num">1</td>
+          <td class="td-num">forfait</td>
+          <td class="td-num">585,76 €</td>
+          <td class="td-num" style="color:var(--or)">585,76 €</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="totals-section">
+      <div class="totals-box">
+        <div class="total-line"><span class="t-label">Sous-total HT</span><span class="t-val">7 312,00 €</span></div>
+        <div class="total-line"><span class="t-label">Commission By Habitat HT</span><span class="t-val">585,76 €</span></div>
+        <div class="total-line"><span class="t-label">Base HT totale</span><span class="t-val">7 897,76 €</span></div>
+        <div class="total-line"><span class="t-label">TVA 5,5% (travaux RGE)</span><span class="t-val">434,38 €</span></div>
+        <div class="total-ttc">
+          <span class="t-label">Total TTC</span>
+          <span class="t-val">8 332,14 €</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="inv-footer">
+    <div class="inv-footer-grid">
+      <div class="footer-block">
+        <h4>Artisan partenaire</h4>
+        <p>RÉNOV'ÉNERGIE BRESSE<br>71 rue Industrie – 71000 Mâcon<br>SIRET : 456 789 123 00021<br>Assurance décennale valide · Certifié RGE</p>
+      </div>
+      <div class="footer-block">
+        <h4>Conditions de paiement</h4>
+        <p>30% versé à la commande (2 499,64 €)<br>Solde de 70% à réception (5 832,50 €)<br>Virement bancaire – IBAN FR76 3000 6000 0112 3456 7890 186<br>Pénalités de retard : 3× taux légal en vigueur</p>
+      </div>
+    </div>
+    <div class="inv-legal">
+      By Habitat – SARL au capital de 2 000 € – Siège : Saillenard (71310) – SIRET 912 345 678 00014 – N° TVA FR12912345678<br>
+      En cas de retard de paiement, une indemnité forfaitaire de 40 € pour frais de recouvrement est due de plein droit (Art. D.441-5 Code de Commerce).
+    </div>
+  </div>
+</div>
+<button class="print-btn" onclick="window.print()">🖨️ Imprimer cette facture / Exporter en PDF</button>
+</div>
+
+<!-- ======================== FACTURE 2 ======================== -->
+<div class="invoice" id="inv1">
+<div class="invoice-doc">
+  <div class="inv-header">
+    <div class="inv-logo">
+      <div class="inv-logo-hex">⌂</div>
+      <div class="inv-brand"><h2>By Habitat</h2><p>Courtage dans le Bâtiment</p></div>
+    </div>
+    <div class="inv-meta">
+      <div class="inv-num">FACTURE N° FAC-2026-002</div>
+      <div class="inv-date">Émise le 22 avril 2026</div>
+      <div class="inv-date">Échéance : 22 mai 2026</div>
+      <div class="inv-status status-pending">⏳ En attente</div>
+    </div>
+  </div>
+
+  <div class="inv-parties">
+    <div>
+      <div class="party-label">Émetteur</div>
+      <div class="party-name">By Habitat</div>
+      <div class="party-info">
+        Siège social : Saillenard (71310)<br>
+        Bourgogne-Franche-Comté<br>
+        Dirigeant : M. BOUKHRIS Youness<br>
+        Email : contact@byhabitat.fr<br>
+        SIRET : 912 345 678 00014<br>
+        N° TVA intracomm. : FR 12 912345678
+      </div>
+    </div>
+    <div>
+      <div class="party-label">Client</div>
+      <div class="party-name">Mme FONTAINE Isabelle</div>
+      <div class="party-info">
+        4 impasse des Rossignols<br>
+        01340 Montrevel-en-Bresse<br>
+        Tél. : 07 56 34 12 89<br>
+        Email : i.fontaine@email.fr
+      </div>
+    </div>
+  </div>
+
+  <div class="inv-body">
+    <table class="postes-table">
+      <thead>
+        <tr>
+          <th style="width:44%">Description</th>
+          <th>Qté</th>
+          <th>Unité</th>
+          <th>P.U. HT</th>
+          <th>Total HT</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="td-desc">Remplacement chauffe-eau thermodynamique 200L</td>
+          <td class="td-num">1</td>
+          <td class="td-num">u</td>
+          <td class="td-num">850,00 €</td>
+          <td class="td-num">850,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc">Remplacement robinetterie salle de bain (mitigeur + douchette)</td>
+          <td class="td-num">2</td>
+          <td class="td-num">u</td>
+          <td class="td-num">185,00 €</td>
+          <td class="td-num">370,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc">Remplacement robinet cuisine avec flexible</td>
+          <td class="td-num">1</td>
+          <td class="td-num">u</td>
+          <td class="td-num">140,00 €</td>
+          <td class="td-num">140,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc">Débouchage canalisation + contrôle étanchéité</td>
+          <td class="td-num">1</td>
+          <td class="td-num">forfait</td>
+          <td class="td-num">280,00 €</td>
+          <td class="td-num">280,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc">Main-d'œuvre plombier qualifié</td>
+          <td class="td-num">9</td>
+          <td class="td-num">h</td>
+          <td class="td-num">65,00 €</td>
+          <td class="td-num">585,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc" style="color:var(--or)">Commission By Habitat – mise en relation et suivi</td>
+          <td class="td-num">1</td>
+          <td class="td-num">forfait</td>
+          <td class="td-num">178,20 €</td>
+          <td class="td-num" style="color:var(--or)">178,20 €</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="totals-section">
+      <div class="totals-box">
+        <div class="total-line"><span class="t-label">Sous-total HT</span><span class="t-val">2 225,00 €</span></div>
+        <div class="total-line"><span class="t-label">Commission By Habitat HT</span><span class="t-val">178,20 €</span></div>
+        <div class="total-line"><span class="t-label">Base HT totale</span><span class="t-val">2 403,20 €</span></div>
+        <div class="total-line"><span class="t-label">TVA 10% (travaux de rénovation)</span><span class="t-val">240,32 €</span></div>
+        <div class="total-ttc">
+          <span class="t-label">Total TTC</span>
+          <span class="t-val">2 643,52 €</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="inv-footer">
+    <div class="inv-footer-grid">
+      <div class="footer-block">
+        <h4>Artisan partenaire</h4>
+        <p>PLOMBERIE GUICHARD ET FILS<br>39 route de la Bresse – 01340 Montrevel<br>SIRET : 789 123 456 00033<br>Responsabilité civile professionnelle valide</p>
+      </div>
+      <div class="footer-block">
+        <h4>Conditions de paiement</h4>
+        <p>50% versé à la commande (1 321,76 €)<br>Solde de 50% à réception (1 321,76 €)<br>Virement bancaire – IBAN FR76 3000 6000 0112 3456 7890 186<br>Pénalités de retard : 3× taux légal en vigueur</p>
+      </div>
+    </div>
+    <div class="inv-legal">
+      By Habitat – SARL au capital de 2 000 € – Siège : Saillenard (71310) – SIRET 912 345 678 00014 – N° TVA FR12912345678<br>
+      En cas de retard de paiement, une indemnité forfaitaire de 40 € pour frais de recouvrement est due de plein droit (Art. D.441-5 Code de Commerce).
+    </div>
+  </div>
+</div>
+<button class="print-btn" onclick="window.print()">🖨️ Imprimer cette facture / Exporter en PDF</button>
+</div>
+
+<!-- ======================== FACTURE 3 ======================== -->
+<div class="invoice" id="inv2">
+<div class="invoice-doc">
+  <div class="inv-header">
+    <div class="inv-logo">
+      <div class="inv-logo-hex">⌂</div>
+      <div class="inv-brand"><h2>By Habitat</h2><p>Courtage dans le Bâtiment</p></div>
+    </div>
+    <div class="inv-meta">
+      <div class="inv-num">FACTURE N° FAC-2026-003</div>
+      <div class="inv-date">Émise le 5 mai 2026</div>
+      <div class="inv-date">Échéance : 5 juin 2026</div>
+      <div class="inv-status status-pending">⏳ En attente</div>
+    </div>
+  </div>
+
+  <div class="inv-parties">
+    <div>
+      <div class="party-label">Émetteur</div>
+      <div class="party-name">By Habitat</div>
+      <div class="party-info">
+        Siège social : Saillenard (71310)<br>
+        Bourgogne-Franche-Comté<br>
+        Dirigeant : M. BOUKHRIS Youness<br>
+        Email : contact@byhabitat.fr<br>
+        SIRET : 912 345 678 00014<br>
+        N° TVA intracomm. : FR 12 912345678
+      </div>
+    </div>
+    <div>
+      <div class="party-label">Client</div>
+      <div class="party-name">SCI DES BRUYÈRES</div>
+      <div class="party-info">
+        Représentée par M. CHEVALIER Damien<br>
+        12 allée des Chênes<br>
+        39140 Bletterans<br>
+        Tél. : 06 87 23 45 61<br>
+        SIRET : 342 987 654 00045
+      </div>
+    </div>
+  </div>
+
+  <div class="inv-body">
+    <table class="postes-table">
+      <thead>
+        <tr>
+          <th style="width:44%">Description</th>
+          <th>Qté</th>
+          <th>Unité</th>
+          <th>P.U. HT</th>
+          <th>Total HT</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="td-desc" colspan="5" style="background:#F9F4EE;font-weight:700;color:var(--bordeaux);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em">Travaux de peinture</td>
+        </tr>
+        <tr>
+          <td class="td-desc">Peinture murs intérieurs – 2 couches (apprêt + finition)</td>
+          <td class="td-num">145</td>
+          <td class="td-num">m²</td>
+          <td class="td-num">12,00 €</td>
+          <td class="td-num">1 740,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc">Peinture plafonds – 2 couches</td>
+          <td class="td-num">68</td>
+          <td class="td-num">m²</td>
+          <td class="td-num">15,00 €</td>
+          <td class="td-num">1 020,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc">Fournitures peinture, apprêt, outillage</td>
+          <td class="td-num">1</td>
+          <td class="td-num">forfait</td>
+          <td class="td-num">480,00 €</td>
+          <td class="td-num">480,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc" colspan="5" style="background:#F9F4EE;font-weight:700;color:var(--bordeaux);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em">Travaux de menuiserie</td>
+        </tr>
+        <tr>
+          <td class="td-desc">Pose fenêtres PVC double vitrage 4/16/4 (fourni)</td>
+          <td class="td-num">5</td>
+          <td class="td-num">u</td>
+          <td class="td-num">480,00 €</td>
+          <td class="td-num">2 400,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc">Pose porte d'entrée blindée (fournie)</td>
+          <td class="td-num">1</td>
+          <td class="td-num">u</td>
+          <td class="td-num">920,00 €</td>
+          <td class="td-num">920,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc">Main-d'œuvre peintre et menuisier (total chantier)</td>
+          <td class="td-num">42</td>
+          <td class="td-num">h</td>
+          <td class="td-num">52,00 €</td>
+          <td class="td-num">2 184,00 €</td>
+        </tr>
+        <tr>
+          <td class="td-desc" style="color:var(--or)">Commission By Habitat – coordination multi-corps</td>
+          <td class="td-num">1</td>
+          <td class="td-num">forfait</td>
+          <td class="td-num">713,92 €</td>
+          <td class="td-num" style="color:var(--or)">713,92 €</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="totals-section">
+      <div class="totals-box">
+        <div class="total-line"><span class="t-label">Sous-total HT travaux</span><span class="t-val">8 744,00 €</span></div>
+        <div class="total-line"><span class="t-label">Commission By Habitat HT</span><span class="t-val">713,92 €</span></div>
+        <div class="total-line"><span class="t-label">Base HT totale</span><span class="t-val">9 457,92 €</span></div>
+        <div class="total-line"><span class="t-label">TVA 10% (travaux de rénovation)</span><span class="t-val">945,79 €</span></div>
+        <div class="total-ttc">
+          <span class="t-label">Total TTC</span>
+          <span class="t-val">10 403,71 €</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="inv-footer">
+    <div class="inv-footer-grid">
+      <div class="footer-block">
+        <h4>Artisans partenaires</h4>
+        <p>PEINTURE DESCHAMPS – Bourg-en-Bresse (01)<br>MENUISERIE PERRIN & ASSOCIÉS – Lons-le-Saunier (39)<br>Assurances décennales valides · Documents sur demande</p>
+      </div>
+      <div class="footer-block">
+        <h4>Conditions de paiement</h4>
+        <p>30% versé à la commande (3 121,11 €)<br>Solde de 70% à réception (7 282,60 €)<br>Virement bancaire – IBAN FR76 3000 6000 0112 3456 7890 186<br>Pénalités de retard : 3× taux légal en vigueur</p>
+      </div>
+    </div>
+    <div class="inv-legal">
+      By Habitat – SARL au capital de 2 000 € – Siège : Saillenard (71310) – SIRET 912 345 678 00014 – N° TVA FR12912345678<br>
+      En cas de retard de paiement, une indemnité forfaitaire de 40 € pour frais de recouvrement est due de plein droit (Art. D.441-5 Code de Commerce).
+    </div>
+  </div>
+</div>
+<button class="print-btn" onclick="window.print()">🖨️ Imprimer cette facture / Exporter en PDF</button>
+</div>
+
+</div><!-- /container -->
+
+<script>
+function showInv(n) {
+  document.querySelectorAll('.invoice').forEach((el,i) => el.classList.toggle('active', i===n));
+  document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', i===n));
+}
+</script>
+</body>
+</html>

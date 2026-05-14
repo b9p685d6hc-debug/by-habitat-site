@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulateur de Devis – By Habitat</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bordeaux: #7B1D1D; --bordeaux-light: #A02020; --or: #C8860A; --or-light: #E5A020;
+  --creme: #FAF6F0; --creme-dark: #F0E8DC; --text: #1A1208; --text-light: #5A4A30;
+  --white: #FFFFFF; --green: #1A7A3A; --shadow: rgba(123,29,29,0.15);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--creme); color:var(--text); min-height:100vh; }
+
+header {
+  background: linear-gradient(135deg, var(--bordeaux) 0%, #3D0B0B 100%);
+  padding: 24px 40px; display: flex; align-items: center; gap: 20px;
+}
+.logo-hex {
+  width:44px; height:44px;
+  background:rgba(200,134,10,0.3); border:2px solid var(--or);
+  clip-path:polygon(50% 0%,95% 25%,95% 75%,50% 100%,5% 75%,5% 25%);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem;
+}
+header h1 { font-family:'Playfair Display',serif; color:var(--creme); font-size:1.5rem; }
+header p { color:rgba(250,246,240,0.7); font-size:0.85rem; }
+.header-badge {
+  margin-left:auto; background:rgba(200,134,10,0.2); border:1px solid var(--or);
+  border-radius:20px; padding:6px 16px; color:var(--or-light); font-size:0.8rem; font-weight:600;
+}
+
+.container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+
+.simulator-layout { display: grid; grid-template-columns: 1fr 360px; gap: 32px; align-items: start; }
+
+/* FORM PANEL */
+.form-panel {
+  background: var(--white); border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+.panel-section {
+  padding: 28px 32px;
+  border-bottom: 1px solid var(--creme-dark);
+}
+.panel-section:last-child { border-bottom: none; }
+.panel-title {
+  font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--bordeaux);
+  margin-bottom:20px; display:flex; align-items:center; gap:10px;
+}
+.panel-title .icon { font-size:1.2rem; }
+
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.form-group { margin-bottom:16px; }
+.form-group:last-child { margin-bottom:0; }
+label { display:block; font-size:0.8rem; font-weight:600; color:var(--text); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em; }
+select, input[type=number], input[type=text] {
+  width:100%; padding:11px 14px; border:1.5px solid #E0D5C5;
+  border-radius:8px; font-family:'DM Sans',sans-serif; font-size:0.9rem;
+  color:var(--text); background:var(--creme); transition:border-color 0.2s; outline:none;
+  appearance:none;
+}
+select:focus, input:focus { border-color:var(--bordeaux); }
+
+/* POSTES */
+.postes-list { list-style:none; }
+.poste-item {
+  display:grid; grid-template-columns:1fr 100px 110px 80px 36px;
+  gap:10px; align-items:center;
+  padding:12px 0; border-bottom:1px solid #F5EEE6;
+}
+.poste-item:first-child { border-top:1px solid #F5EEE6; }
+.poste-item input { padding:8px 10px; }
+.poste-label { font-size:0.82rem; font-weight:600; color:var(--text-light); margin-bottom:4px; }
+.poste-total { text-align:right; font-weight:600; color:var(--bordeaux); font-size:0.9rem; }
+.btn-remove {
+  background:rgba(220,50,50,0.08); border:1px solid rgba(220,50,50,0.2);
+  border-radius:6px; width:32px; height:32px; cursor:pointer;
+  color:#CC3333; font-size:1rem; display:flex; align-items:center; justify-content:center;
+  transition:background 0.2s;
+}
+.btn-remove:hover { background:rgba(220,50,50,0.15); }
+.btn-add {
+  width:100%; margin-top:16px; padding:10px; background:none;
+  border:1.5px dashed rgba(200,134,10,0.5); border-radius:8px;
+  color:var(--or); font-family:'DM Sans',sans-serif; font-weight:600;
+  font-size:0.88rem; cursor:pointer; transition:all 0.2s;
+}
+.btn-add:hover { background:rgba(200,134,10,0.06); border-color:var(--or); }
+.postes-header {
+  display:grid; grid-template-columns:1fr 100px 110px 80px 36px;
+  gap:10px; padding-bottom:8px; margin-bottom:4px;
+  font-size:0.72rem; font-weight:600; color:var(--text-light);
+  text-transform:uppercase; letter-spacing:0.05em;
+}
+
+/* QUOTE PANEL */
+.quote-panel {
+  position: sticky; top: 20px;
+  background: linear-gradient(160deg, var(--bordeaux) 0%, #2D0808 100%);
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 8px 32px var(--shadow);
+}
+.quote-header {
+  padding: 28px 28px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.quote-header h2 { font-family:'Playfair Display',serif; color:var(--creme); font-size:1.2rem; }
+.quote-ref { font-size:0.75rem; color:rgba(250,246,240,0.5); margin-top:4px; }
+.quote-body { padding: 24px 28px; }
+.quote-line {
+  display:flex; justify-content:space-between; align-items:flex-start;
+  margin-bottom:14px; font-size:0.88rem;
+}
+.quote-line .label { color:rgba(250,246,240,0.7); flex:1; }
+.quote-line .value { color:var(--creme); font-weight:600; text-align:right; }
+.quote-section-title {
+  font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em;
+  color:var(--or-light); margin:20px 0 10px; padding-bottom:6px;
+  border-bottom:1px solid rgba(200,134,10,0.2);
+}
+.quote-divider { height:1px; background:rgba(255,255,255,0.12); margin:16px 0; }
+.quote-total {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:16px 28px;
+  background:rgba(200,134,10,0.12); border-top:1px solid rgba(200,134,10,0.3);
+}
+.quote-total .label { color:var(--or-light); font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; }
+.quote-total .value { font-family:'Playfair Display',serif; font-size:2rem; color:var(--creme); font-weight:700; }
+.tva-rate-tag {
+  display:inline-flex; align-items:center; gap:6px;
+  background:rgba(26,122,58,0.2); border:1px solid rgba(26,122,58,0.4);
+  border-radius:12px; padding:3px 10px; font-size:0.75rem; color:#6FD98F; font-weight:600;
+  margin-bottom:20px;
+}
+.quote-actions { padding: 20px 28px; display:flex; flex-direction:column; gap:10px; }
+.btn-print {
+  width:100%; padding:13px; background:var(--or);
+  border:none; border-radius:8px; color:var(--white); font-family:'DM Sans',sans-serif;
+  font-size:0.9rem; font-weight:700; cursor:pointer; transition:background 0.2s;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn-print:hover { background:var(--or-light); }
+.btn-reset {
+  width:100%; padding:11px; background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.15); border-radius:8px;
+  color:rgba(250,246,240,0.7); font-family:'DM Sans',sans-serif;
+  font-size:0.85rem; cursor:pointer; transition:all 0.2s;
+}
+.btn-reset:hover { background:rgba(255,255,255,0.1); color:var(--creme); }
+
+.mention-box {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px; padding:14px; margin:0 28px 20px;
+}
+.mention-box p { font-size:0.73rem; color:rgba(250,246,240,0.5); line-height:1.5; }
+
+/* PRINT */
+@media print {
+  header, .form-panel, .quote-actions, .mention-box { display:none; }
+  .simulator-layout { grid-template-columns:1fr; }
+  .quote-panel {
+    position:static; background:white; color:black;
+    box-shadow:none; border:2px solid var(--bordeaux);
+  }
+  body { background:white; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-hex">⌂</div>
+  <div>
+    <h1>By Habitat</h1>
+    <p>Société de Courtage dans le Bâtiment</p>
+  </div>
+  <div class="header-badge">📋 Simulateur de Devis</div>
+</header>
+
+<div class="container">
+  <div class="simulator-layout">
+
+    <!-- FORMULAIRE -->
+    <div class="form-panel">
+
+      <!-- Infos client -->
+      <div class="panel-section">
+        <div class="panel-title"><span class="icon">👤</span> Informations client</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nom du client</label>
+            <input type="text" id="clientNom" placeholder="DUPONT Marie" oninput="updateQuote()">
+          </div>
+          <div class="form-group">
+            <label>Téléphone</label>
+            <input type="text" id="clientTel" placeholder="06 12 34 56 78" oninput="updateQuote()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Adresse des travaux</label>
+            <input type="text" id="clientAdresse" placeholder="12 rue des Alouettes" oninput="updateQuote()">
+          </div>
+          <div class="form-group">
+            <label>Commune</label>
+            <input type="text" id="clientCommune" placeholder="Bourg-en-Bresse" oninput="updateQuote()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Infos travaux -->
+      <div class="panel-section">
+        <div class="panel-title"><span class="icon">🏗️</span> Nature des travaux</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Type de travaux</label>
+            <select id="typeTravaux" onchange="updatePreset()">
+              <option value="">-- Sélectionnez --</option>
+              <option value="isolation">Isolation thermique (RGE)</option>
+              <option value="plomberie">Plomberie & sanitaires</option>
+              <option value="electricite">Électricité</option>
+              <option value="maconnerie">Maçonnerie</option>
+              <option value="couverture">Couverture & charpente</option>
+              <option value="peinture">Peinture & revêtements</option>
+              <option value="menuiserie">Menuiserie</option>
+              <option value="paysagisme">Aménagement paysager</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Taux TVA applicable</label>
+            <select id="tvaSelect" onchange="updateQuote()">
+              <option value="5.5">5,5% – Rénovation énergétique</option>
+              <option value="10" selected>10% – Travaux de rénovation</option>
+              <option value="20">20% – Taux normal</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Délai d'exécution</label>
+            <select id="delai" onchange="updateQuote()">
+              <option>1 à 3 jours</option>
+              <option selected>1 à 2 semaines</option>
+              <option>2 à 4 semaines</option>
+              <option>1 à 2 mois</option>
+              <option>À définir ensemble</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Conditions de paiement</label>
+            <select id="paiement" onchange="updateQuote()">
+              <option>30% à la commande – solde à réception</option>
+              <option>50% à la commande – 50% à réception</option>
+              <option>100% à réception</option>
+              <option>Virement bancaire sous 30 jours</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Postes -->
+      <div class="panel-section">
+        <div class="panel-title"><span class="icon">📐</span> Détail des postes</div>
+        <div class="postes-header">
+          <span>Description</span><span>Qté</span><span>Unité</span><span>P.U. HT (€)</span><span></span>
+        </div>
+        <ul class="postes-list" id="postesList"></ul>
+        <button class="btn-add" onclick="addPoste()">+ Ajouter un poste</button>
+      </div>
+
+      <!-- Artisan -->
+      <div class="panel-section">
+        <div class="panel-title"><span class="icon">👷</span> Artisan partenaire</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nom de l'artisan / Société</label>
+            <input type="text" id="artisanNom" placeholder="MARTIN Constructions" oninput="updateQuote()">
+          </div>
+          <div class="form-group">
+            <label>Corps de métier</label>
+            <input type="text" id="artisanMetier" placeholder="Maçonnerie générale" oninput="updateQuote()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>N° SIRET artisan</label>
+            <input type="text" id="artisanSiret" placeholder="123 456 789 00012" oninput="updateQuote()">
+          </div>
+          <div class="form-group">
+            <label>Commission By Habitat (% du HT)</label>
+            <input type="number" id="commission" value="8" min="0" max="20" step="0.5" oninput="updateQuote()">
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /form-panel -->
+
+    <!-- DEVIS RÉCAPITULATIF -->
+    <div class="quote-panel">
+      <div class="quote-header">
+        <h2>Devis By Habitat</h2>
+        <div class="quote-ref" id="quoteRef">N° DEV-2026-001</div>
+      </div>
+      <div class="quote-body">
+
+        <div class="quote-section-title">CLIENT</div>
+        <div class="quote-line"><span class="label">Nom</span><span class="value" id="qClientNom">–</span></div>
+        <div class="quote-line"><span class="label">Commune</span><span class="value" id="qClientCommune">–</span></div>
+
+        <div class="quote-section-title">TRAVAUX</div>
+        <div class="quote-line"><span class="label">Type</span><span class="value" id="qType">–</span></div>
+        <div class="quote-line"><span class="label">Délai</span><span class="value" id="qDelai">–</span></div>
+        <div class="quote-line"><span class="label">Artisan</span><span class="value" id="qArtisan">–</span></div>
+
+        <div class="quote-section-title">MONTANTS</div>
+        <div id="tvaRateTag" class="tva-rate-tag" style="display:none">🏷️ <span id="tvaRateLabel">TVA 10%</span></div>
+
+        <div class="quote-line"><span class="label">Montant HT</span><span class="value" id="qHT">0,00 €</span></div>
+        <div class="quote-line"><span class="label" id="tvaLabel">TVA (10%)</span><span class="value" id="qTVA">0,00 €</span></div>
+        <div class="quote-divider"></div>
+        <div class="quote-line" style="font-size:1rem">
+          <span class="label" style="color:var(--or-light);font-weight:700">Commission By Habitat</span>
+          <span class="value" style="color:var(--or-light)" id="qCommission">0,00 €</span>
+        </div>
+
+        <div class="quote-section-title">PAIEMENT</div>
+        <div class="quote-line"><span class="label" id="qPaiement" style="font-size:0.82rem;">–</span></div>
+      </div>
+
+      <div class="quote-total">
+        <span class="label">TOTAL TTC</span>
+        <span class="value" id="qTTC">0,00 €</span>
+      </div>
+
+      <div class="mention-box">
+        <p>Devis valable 30 jours. Établi par By Habitat — Courtage bâtiment. Siège : Saillenard (71). Ce devis est indicatif et sujet à validation par l'artisan partenaire. Pénalités de retard : 3× taux légal.</p>
+      </div>
+
+      <div class="quote-actions">
+        <button class="btn-print" onclick="window.print()">🖨️ Imprimer / Exporter PDF</button>
+        <button class="btn-reset" onclick="resetForm()">↺ Réinitialiser le devis</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let postes = [
+  { desc: 'Main-d\'œuvre', qte: 1, unite: 'forfait', pu: 0 },
+  { desc: 'Fournitures & matériaux', qte: 1, unite: 'forfait', pu: 0 },
+];
+
+const presets = {
+  isolation: [
+    { desc: 'Isolation combles perdus (laine soufflée)', qte: 80, unite: 'm²', pu: 28 },
+    { desc: 'Isolation murs intérieurs (laine de roche)', qte: 45, unite: 'm²', pu: 55 },
+    { desc: 'Main-d\'œuvre et mise en œuvre', qte: 1, unite: 'forfait', pu: 1200 },
+  ],
+  plomberie: [
+    { desc: 'Remplacement chauffe-eau 200L', qte: 1, unite: 'u', pu: 650 },
+    { desc: 'Remplacement robinetterie salle de bain', qte: 3, unite: 'u', pu: 180 },
+    { desc: 'Main-d\'œuvre plombier', qte: 8, unite: 'h', pu: 65 },
+  ],
+  electricite: [
+    { desc: 'Mise aux normes tableau électrique', qte: 1, unite: 'forfait', pu: 850 },
+    { desc: 'Câblage prises & interrupteurs', qte: 20, unite: 'u', pu: 35 },
+    { desc: 'Main-d\'œuvre électricien', qte: 12, unite: 'h', pu: 70 },
+  ],
+  maconnerie: [
+    { desc: 'Reprise enduit façade', qte: 60, unite: 'm²', pu: 45 },
+    { desc: 'Fournitures (mortier, enduit)', qte: 1, unite: 'forfait', pu: 480 },
+    { desc: 'Main-d\'œuvre maçon', qte: 20, unite: 'h', pu: 58 },
+  ],
+  couverture: [
+    { desc: 'Remplacement tuiles faitières', qte: 30, unite: 'ml', pu: 22 },
+    { desc: 'Nettoyage et traitement toiture', qte: 80, unite: 'm²', pu: 18 },
+    { desc: 'Main-d\'œuvre couvreur', qte: 16, unite: 'h', pu: 62 },
+  ],
+  peinture: [
+    { desc: 'Peinture murs (2 couches)', qte: 120, unite: 'm²', pu: 12 },
+    { desc: 'Peinture plafonds', qte: 60, unite: 'm²', pu: 15 },
+    { desc: 'Fournitures (peinture, apprêt)', qte: 1, unite: 'forfait', pu: 350 },
+    { desc: 'Main-d\'œuvre peintre', qte: 20, unite: 'h', pu: 48 },
+  ],
+  menuiserie: [
+    { desc: 'Pose fenêtre PVC double vitrage', qte: 4, unite: 'u', pu: 480 },
+    { desc: 'Pose porte d\'entrée', qte: 1, unite: 'u', pu: 850 },
+    { desc: 'Main-d\'œuvre menuisier', qte: 14, unite: 'h', pu: 58 },
+  ],
+  paysagisme: [
+    { desc: 'Terrassement et nivellement', qte: 80, unite: 'm²', pu: 22 },
+    { desc: 'Engazonnement', qte: 60, unite: 'm²', pu: 8 },
+    { desc: 'Plantation arbustes haie', qte: 15, unite: 'u', pu: 35 },
+    { desc: 'Main-d\'œuvre paysagiste', qte: 12, unite: 'h', pu: 52 },
+  ],
+  autre: [{ desc: 'Prestation à définir', qte: 1, unite: 'forfait', pu: 0 }],
+};
+
+let devisNum = Math.floor(Math.random() * 900) + 100;
+document.getElementById('quoteRef').textContent = `N° DEV-2026-${String(devisNum).padStart(3,'0')} · Émis le ${new Date().toLocaleDateString('fr-FR')}`;
+
+function renderPostes() {
+  const list = document.getElementById('postesList');
+  list.innerHTML = '';
+  postes.forEach((p, i) => {
+    const li = document.createElement('li');
+    li.className = 'poste-item';
+    li.innerHTML = `
+      <div><input type="text" placeholder="Description" value="${p.desc}" oninput="postes[${i}].desc=this.value;updateQuote()"></div>
+      <div><input type="number" placeholder="1" value="${p.qte}" min="0" step="any" oninput="postes[${i}].qte=parseFloat(this.value)||0;updateQuote()"></div>
+      <div>
+        <select onchange="postes[${i}].unite=this.value;updateQuote()">
+          ${['forfait','h','m²','m','ml','u','kg','m³'].map(u=>`<option${u===p.unite?' selected':''}>${u}</option>`).join('')}
+        </select>
+      </div>
+      <div><input type="number" placeholder="0" value="${p.pu}" min="0" step="0.01" oninput="postes[${i}].pu=parseFloat(this.value)||0;updateQuote()"></div>
+      <button class="btn-remove" onclick="removePoste(${i})">✕</button>
+    `;
+    list.appendChild(li);
+  });
+  updateQuote();
+}
+
+function addPoste() {
+  postes.push({ desc: '', qte: 1, unite: 'forfait', pu: 0 });
+  renderPostes();
+}
+
+function removePoste(i) {
+  postes.splice(i, 1);
+  renderPostes();
+}
+
+function updatePreset() {
+  const type = document.getElementById('typeTravaux').value;
+  if (type && presets[type]) {
+    postes = [...presets[type]];
+    // Auto TVA
+    if (type === 'isolation') document.getElementById('tvaSelect').value = '5.5';
+    else if (['plomberie','electricite','maconnerie','couverture','peinture','menuiserie','paysagisme'].includes(type))
+      document.getElementById('tvaSelect').value = '10';
+    renderPostes();
+  }
+  updateQuote();
+}
+
+function fmt(n) { return n.toLocaleString('fr-FR', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €'; }
+
+function updateQuote() {
+  const ht = postes.reduce((s,p) => s + (p.qte * p.pu), 0);
+  const tva = parseFloat(document.getElementById('tvaSelect').value) || 10;
+  const commRate = parseFloat(document.getElementById('commission').value) || 0;
+  const tvaAmt = ht * tva / 100;
+  const comm = ht * commRate / 100;
+  const ttc = ht + tvaAmt;
+
+  document.getElementById('qClientNom').textContent = document.getElementById('clientNom').value || '–';
+  document.getElementById('qClientCommune').textContent = document.getElementById('clientCommune').value || '–';
+  document.getElementById('qType').textContent = document.getElementById('typeTravaux').selectedOptions[0]?.text || '–';
+  document.getElementById('qDelai').textContent = document.getElementById('delai').value || '–';
+  document.getElementById('qArtisan').textContent = document.getElementById('artisanNom').value || 'À définir';
+  document.getElementById('qPaiement').textContent = document.getElementById('paiement').value;
+
+  document.getElementById('qHT').textContent = fmt(ht);
+  document.getElementById('qTVA').textContent = fmt(tvaAmt);
+  document.getElementById('qTTC').textContent = fmt(ttc);
+  document.getElementById('qCommission').textContent = fmt(comm);
+  document.getElementById('tvaLabel').textContent = `TVA (${tva}%)`;
+
+  const tvaTag = document.getElementById('tvaRateTag');
+  const tvaRateLabel = document.getElementById('tvaRateLabel');
+  if (tva < 10) {
+    tvaTag.style.display = 'inline-flex';
+    tvaRateLabel.textContent = `TVA ${tva}% – Taux réduit travaux éligibles`;
+  } else {
+    tvaTag.style.display = 'none';
+  }
+}
+
+function resetForm() {
+  if (!confirm('Réinitialiser le simulateur ?')) return;
+  document.getElementById('clientNom').value = '';
+  document.getElementById('clientTel').value = '';
+  document.getElementById('clientAdresse').value = '';
+  document.getElementById('clientCommune').value = '';
+  document.getElementById('typeTravaux').value = '';
+  document.getElementById('artisanNom').value = '';
+  document.getElementById('artisanMetier').value = '';
+  document.getElementById('artisanSiret').value = '';
+  document.getElementById('commission').value = '8';
+  postes = [
+    { desc: 'Main-d\'œuvre', qte: 1, unite: 'forfait', pu: 0 },
+    { desc: 'Fournitures & matériaux', qte: 1, unite: 'forfait', pu: 0 },
+  ];
+  renderPostes();
+}
+
+renderPostes();
+</script>
+</body>
+</html>
